@@ -24,30 +24,23 @@ if ($conn->connect_error) {
 $sql = "select Vaccination_Reference_Num, VaccineType from Vaccines;";
 $result = $conn->query($sql);
 
-echo "<form method='GET' action='CUEDVaccination.php'>";
-echo "<input type='submit' name='Actions' value='Create'>";
-if ($result->num_rows > 0) {
-    echo "<table border='1 solid black'> 
-    <tr>
-    <th>Vaccination Reference Number</th>
-    <th>Vaccination Type</th>
-    <th>Actions</th>
-</tr>";
-    // output data of each row
-    while ($row = $result->fetch_assoc()) {
-        echo "<tr>";
-        echo "<th>".$row["Vaccination_Reference_Num"]."</th>";
-        echo "<th>".$row["VaccineType"]."</th>";
-        echo "<th><a href=CUEDVaccination.php?FID=".$row["Vaccination_Reference_Num"]."&Actions=Edit>Edit
-                <a href=CUEDVaccination.php?FID=".$row["Vaccination_Reference_Num"]."&Actions=Delete>Delete
-                </th>";
-        echo "</tr>";
-    }
-} else {
-    echo "0 results";
-}
-echo "</form>";
-$conn->close();
-?>
-</BODY>
-</HTML>
+@echo off
+
+set "folder=C:\path\to\your\folder"
+set "file_limit=5"
+
+REM Get the number of files in the folder
+for /f %%i in ('dir /b /a-d "%folder%" ^| find /c /v ""') do set "file_count=%%i"
+
+REM Calculate the number of files to delete
+set /a "files_to_delete=file_count - file_limit"
+
+REM If there are more files than the limit, delete the excess files
+if %files_to_delete% gtr 0 (
+    for /f "skip=%files_to_delete% delims=" %%f in ('dir /b /a-d /o-d "%folder%"') do (
+        echo Deleting "%%f"
+        del "%folder%\%%f"
+    )
+) else (
+    echo No files to delete.
+)
