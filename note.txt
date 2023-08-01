@@ -6,15 +6,12 @@ set "folder_limit=5"
 REM Get the number of folders in the parent folder
 for /f %%i in ('dir /ad /b "%parent_folder%" ^| find /c /v ""') do set "folder_count=%%i"
 
-REM Calculate the number of folders to delete
-set /a "folders_to_delete=folder_count - folder_limit"
+REM Calculate the number of folders to keep (most recent five)
+set /a "folders_to_keep=folder_count - folder_limit"
+if %folders_to_keep% lss 0 set "folders_to_keep=0"
 
-REM If there are more folders than the limit, delete the excess folders
-if %folders_to_delete% gtr 0 (
-    for /f "skip=%folders_to_delete% delims=" %%f in ('dir /ad /b /o-d "%parent_folder%"') do (
-        echo Deleting folder "%%f"
-        rd /s /q "%parent_folder%\%%f"
-    )
-) else (
-    echo No folders to delete.
+REM Sort the folders by modified date in descending order (most recent first)
+for /f "tokens=* skip=%folders_to_keep%" %%f in ('dir /ad /b /o-d "%parent_folder%"') do (
+    echo Deleting folder "%%f"
+    rd /s /q "%parent_folder%\%%f"
 )
