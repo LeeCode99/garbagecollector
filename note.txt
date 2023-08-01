@@ -16,5 +16,7 @@ for /f "tokens=* delims=" %%f in ('dir /ad /b /o:d /t:w "%parent_folder%"') do (
         echo Deleting folder "%%f"
         rd /s /q "%parent_folder%\%%f"
         set /a "folders_to_delete=folders_to_delete-1"
+    ) else (
+        goto :EOF
     )
 )
