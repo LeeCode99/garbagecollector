@@ -1,27 +1,19 @@
-      function DeleteOldBackups($backupFolder) {
-        $backups = Get-ChildItem -Path $backupFolder | Where-Object { $_.PSIsContainer }
-        $backups | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | ForEach-Object {
-          Write-Host "Deleting old backup: $($_.Name)"
-          Remove-Item -Path $_.FullName -Recurse -Force
-        }
-      }
+$backupParentFolder = "C:\inetpub\wwwroot\backupFolder"
+$webBackupFolder = Join-Path $backupParentFolder "backupsWeb"
 
-      $dt = Get-Date
-      $fullstamp = $dt.ToString("yyyy-MM-dd HH-mm-ss")
-      Write-Host "fullstamp: $fullstamp"
+# Get the latest backup folder
+$latestBackup = Get-ChildItem -Path $webBackupFolder -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-      $webBackupFolder = "C:\inetpub\wwwroot\backupFolder\backupsWeb\$fullstamp"
-      $qaBackupFolder = "C:\inetpub\wwwroot\backupFolder\backupsQA\$fullstamp"
-      $prodBackupFolder = "C:\inetpub\wwwroot\backupFolder\backupsProd\$fullstamp"
+if ($latestBackup -eq $null) {
+    Write-Host "No backup found in $webBackupFolder. Skipping restore."
+}
+else {
+    # Delete files in the original web folder
+    Get-ChildItem -Path "C:\inetpub\wwwroot\demoweb\*" -File | Remove-Item -Force
 
-      New-Item -ItemType Directory -Path $webBackupFolder -Force
-      New-Item -ItemType Directory -Path $qaBackupFolder -Force
-      New-Item -ItemType Directory -Path $prodBackupFolder -Force
-
-      Copy-Item -Path "C:\inetpub\wwwroot\demoweb\*" -Destination $webBackupFolder -Recurse
-      Copy-Item -Path "C:\inetpub\wwwroot\demoA\*" -Destination $qaBackupFolder -Recurse
-      Copy-Item -Path "C:\inetpub\wwwroot\demoProd\*" -Destination $prodBackupFolder -Recurse
-
-      DeleteOldBackups "C:\inetpub\wwwroot\backupFolder\backupsWeb"
-      DeleteOldBackups "C:\inetpub\wwwroot\backupFolder\backupsQA"
-      DeleteOldBackups "C:\inetpub\wwwroot\backupFolder\backupsProd"
+    # Copy the contents of the latest backup folder to the web folder
+    $sourcePath = $latestBackup.FullName
+    $destinationPath = "C:\inetpub\wwwroot\demoweb"
+    Write-Host "Restoring latest backup from $sourcePath to $destinationPath"
+    Copy-Item -Path "$sourcePath\*" -Destination $destinationPath -Recurse -Force
+}
