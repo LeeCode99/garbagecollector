@@ -1,22 +1,27 @@
-@echo off
+      function DeleteOldBackups($backupFolder) {
+        $backups = Get-ChildItem -Path $backupFolder | Where-Object { $_.PSIsContainer }
+        $backups | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | ForEach-Object {
+          Write-Host "Deleting old backup: $($_.Name)"
+          Remove-Item -Path $_.FullName -Recurse -Force
+        }
+      }
 
-set "parent_folder=C:\path\to\your\parent\folder"
-set "folder_limit=5"
+      $dt = Get-Date
+      $fullstamp = $dt.ToString("yyyy-MM-dd HH-mm-ss")
+      Write-Host "fullstamp: $fullstamp"
 
-REM Get the number of folders in the parent folder
-for /f %%i in ('dir /ad /b "%parent_folder%" ^| find /c /v ""') do set "folder_count=%%i"
+      $webBackupFolder = "C:\inetpub\wwwroot\backupFolder\backupsWeb\$fullstamp"
+      $qaBackupFolder = "C:\inetpub\wwwroot\backupFolder\backupsQA\$fullstamp"
+      $prodBackupFolder = "C:\inetpub\wwwroot\backupFolder\backupsProd\$fullstamp"
 
-REM Calculate the number of folders to delete (if more than the limit)
-set /a "folders_to_delete=folder_count - folder_limit"
-if %folders_to_delete% lss 0 set "folders_to_delete=0"
+      New-Item -ItemType Directory -Path $webBackupFolder -Force
+      New-Item -ItemType Directory -Path $qaBackupFolder -Force
+      New-Item -ItemType Directory -Path $prodBackupFolder -Force
 
-REM Sort the folders by modified date in ascending order (oldest first)
-for /f "tokens=* delims=" %%f in ('dir /ad /b /o:d /t:w "%parent_folder%"') do (
-    if %folders_to_delete% gtr 0 (
-        echo Deleting folder "%%f"
-        rd /s /q "%parent_folder%\%%f"
-        set /a "folders_to_delete=folders_to_delete-1"
-    ) else (
-        goto :EOF
-    )
-)
+      Copy-Item -Path "C:\inetpub\wwwroot\demoweb\*" -Destination $webBackupFolder -Recurse
+      Copy-Item -Path "C:\inetpub\wwwroot\demoA\*" -Destination $qaBackupFolder -Recurse
+      Copy-Item -Path "C:\inetpub\wwwroot\demoProd\*" -Destination $prodBackupFolder -Recurse
+
+      DeleteOldBackups "C:\inetpub\wwwroot\backupFolder\backupsWeb"
+      DeleteOldBackups "C:\inetpub\wwwroot\backupFolder\backupsQA"
+      DeleteOldBackups "C:\inetpub\wwwroot\backupFolder\backupsProd"
