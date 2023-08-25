@@ -1,19 +1,4 @@
-$backupParentFolder = "C:\inetpub\wwwroot\backupFolder"
-$webBackupFolder = Join-Path $backupParentFolder "backupsWeb"
+$pattern = '"similarity":\s*\[.*?\]'
 
-# Get the latest backup folder
-$latestBackup = Get-ChildItem -Path $webBackupFolder -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
-if ($latestBackup -eq $null) {
-    Write-Host "No backup found in $webBackupFolder. Skipping restore."
-}
-else {
-    # Delete files in the original web folder
-    Get-ChildItem -Path "C:\inetpub\wwwroot\demoweb\*" -File | Remove-Item -Force
-
-    # Copy the contents of the latest backup folder to the web folder
-    $sourcePath = $latestBackup.FullName
-    $destinationPath = "C:\inetpub\wwwroot\demoweb"
-    Write-Host "Restoring latest backup from $sourcePath to $destinationPath"
-    Copy-Item -Path "$sourcePath\*" -Destination $destinationPath -Recurse -Force
-}
+# Remove lines that match the pattern
+$filteredContent = $jsonContent -replace $pattern, '' | Where-Object { $_ -notmatch '"\s*:\s*null\s*,' -and $_ -notmatch '"\s*:\s*null\s*}' }
