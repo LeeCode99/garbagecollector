@@ -1,4 +1,21 @@
-$pattern = '"similarity":\s*\[.*?\]'
 
-# Remove lines that match the pattern
-$filteredContent = $jsonContent -replace $pattern, '' | Where-Object { $_ -notmatch '"\s*:\s*null\s*,' -and $_ -notmatch '"\s*:\s*null\s*}' }
+# Parse the JSON content
+$jsonData = $jsonContent | ConvertFrom-Json
+
+# Function to remove null and empty items
+function Remove-NullAndEmpty($data) {
+    $data | Where-Object {
+        $_ -ne $null -and ($_ -isnot [System.Collections.IEnumerable] -or $_.Count -gt 0)
+    } | ForEach-Object {
+        if ($_ -is [System.Collections.IEnumerable] -and $_ -isnot [System.String]) {
+            $_ = Remove-NullAndEmpty $_
+        }
+        $_
+    }
+}
+
+# Remove null objects and empty arrays
+$filteredData = Remove-NullAndEmpty $jsonData
+
+# Convert the filtered data back to JSON
+$filteredJson = $filteredData | ConvertTo-Json -Depth 10
