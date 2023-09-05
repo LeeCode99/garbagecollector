@@ -1,1 +1,11 @@
-$jsonContent -replace ',\s*("similarity":\s*{[^}]*})', '$1'
+# Specify the remote server's hostname or IP address
+$remoteServer = "RemoteServerNameOrIPAddress"
+
+# Specify the credentials to use for PowerShell Remoting (replace with actual credentials)
+$credential = Get-Credential -UserName "Username" -Password "Password"
+
+# Use PowerShell Remoting to stop the IIS website by its name (change 'YourWebsiteName' to the actual name of your website)
+Invoke-Command -ComputerName $remoteServer -Credential $credential -ScriptBlock {
+    Import-Module WebAdministration
+    Stop-Website -Name 'YourWebsiteName'
+}
