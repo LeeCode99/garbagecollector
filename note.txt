@@ -1,11 +1,22 @@
-# Specify the remote server's hostname or IP address
-$remoteServer = "RemoteServerNameOrIPAddress"
+var keyVaultName = "your-key-vault-name";
+        var keyVaultUri = $"https://{keyVaultName}.vault.azure.net";
 
-# Specify the credentials to use for PowerShell Remoting (replace with actual credentials)
-$credential = Get-Credential -UserName "Username" -Password "Password"
+        var credential = new DefaultAzureCredential();
 
-# Use PowerShell Remoting to stop the IIS website by its name (change 'YourWebsiteName' to the actual name of your website)
-Invoke-Command -ComputerName $remoteServer -Credential $credential -ScriptBlock {
-    Import-Module WebAdministration
-    Stop-Website -Name 'YourWebsiteName'
-}
+        var client = new SecretClient(new Uri(keyVaultUri), credential);
+
+        try
+        {
+            var secretName = "your-secret-name";
+            var secret = await client.GetSecretAsync(secretName);
+
+            // Now you have the secret value
+            var secretValue = secret.Value.Value;
+
+            // Display the secret value on the view
+            Console.WriteLine($"Secret Value: {secretValue}");
+        }
+        catch (RequestFailedException ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
