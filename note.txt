@@ -1,48 +1,29 @@
-using System;
-using System.Threading.Tasks;
-using System.Web.Mvc;
-using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
+using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Extensions.Configuration;
 
-public class SecretController : Controller
-{
-    public async Task<ActionResult> ShowSecret()
-    {
-        try
-        {
-            // Create a Key Vault Secret Client
-            var secretClient = new SecretClient(new Uri("https://your-keyvault-name.vault.azure.net/"), new DefaultAzureCredential());
+// Initialize the AzureServiceTokenProvider
+var azureServiceTokenProvider = new AzureServiceTokenProvider();
 
-            // Specify the name of the secret you want to retrieve
-            string secretName = "YourSecretName";
+// Create a Key Vault client
+var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
 
-            // Retrieve the secret from Azure Key Vault
-            KeyVaultSecret secret = await secretClient.GetSecretAsync(secretName);
+// Specify the Key Vault URL and the secret name
+string keyVaultUrl = "https://<your-key-vault-name>.vault.azure.net";
+string secretName = "<your-secret-name>";
 
-            // Pass the secret value to the view
-            ViewBag.SecretValue = secret.Value;
+// Retrieve the secret from Key Vault
+var secret = keyVaultClient.GetSecretAsync(keyVaultUrl, secretName).Result;
 
-            return View();
-        }
-        catch (Exception ex)
-        {
-            // Handle errors, e.g., secret retrieval failure
-            ViewBag.ErrorMessage = ex.Message;
-            return View("Error");
-        }
-    }
-}
+// Get the database connection string from the secret
+string connectionString = secret.Value;
 
+// Update your web.config or app.config with the retrieved connection string
+var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+config.ConnectionStrings.ConnectionStrings["YourConnectionStringName"].ConnectionString = connectionString;
+config.Save(ConfigurationSaveMode.Modified);
+ConfigurationManager.RefreshSection("connectionStrings");
 
-
-
-
-
-@if (ViewBag.ErrorMessage != null)
-{
-    <p>Error: @ViewBag.ErrorMessage</p>
-}
-else
-{
-    <p>Secret Value: @ViewBag.SecretValue</p>
-}
+<connectionStrings>
+    <add name="YourConnectionStringName" connectionString="PlaceholderConnectionString" />
+</connectionStrings>
