@@ -1,29 +1,71 @@
-using Microsoft.Azure.Services.AppAuthentication;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Extensions.Configuration;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
+using System;
+using System.Threading.Tasks;
 
-// Initialize the AzureServiceTokenProvider
-var azureServiceTokenProvider = new AzureServiceTokenProvider();
+public class KeyVaultHelper
+{
+    private readonly string keyVaultUri;
 
-// Create a Key Vault client
-var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+    public KeyVaultHelper(string keyVaultUri)
+    {
+        this.keyVaultUri = keyVaultUri;
+    }
 
-// Specify the Key Vault URL and the secret name
-string keyVaultUrl = "https://<your-key-vault-name>.vault.azure.net";
-string secretName = "<your-secret-name>";
+    public async Task<string> GetSecretAsync(string secretName)
+    {
+        try
+        {
+            var client = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
 
-// Retrieve the secret from Key Vault
-var secret = keyVaultClient.GetSecretAsync(keyVaultUrl, secretName).Result;
+            KeyVaultSecret secret = await client.GetSecretAsync(secretName);
 
-// Get the database connection string from the secret
-string connectionString = secret.Value;
+            return secret.Value;
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions as needed (e.g., log, return default value, or rethrow).
+            // Make sure to handle exceptions gracefully in a production application.
+            throw ex;
+        }
+    }
+}
 
-// Update your web.config or app.config with the retrieved connection string
-var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-config.ConnectionStrings.ConnectionStrings["YourConnectionStringName"].ConnectionString = connectionString;
-config.Save(ConfigurationSaveMode.Modified);
-ConfigurationManager.RefreshSection("connectionStrings");
 
-<connectionStrings>
-    <add name="YourConnectionStringName" connectionString="PlaceholderConnectionString" />
-</connectionStrings>
+
+
+public class YourController : Controller
+{
+    private readonly KeyVaultHelper keyVaultHelper;
+
+    public YourController()
+    {
+        string keyVaultUri = ConfigurationManager.AppSettings["KeyVaultUri"];
+        keyVaultHelper = new KeyVaultHelper(keyVaultUri);
+    }
+
+    public async Task<ActionResult> YourAction()
+    {
+        try
+        {
+            string connectionString = await keyVaultHelper.GetSecretAsync("YourConnectionStringSecretName");
+
+            // Now you can use the connection string in your application.
+
+            return View();
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions as needed.
+            // Make sure to handle exceptions gracefully in a production application.
+            return View("Error");
+        }
+    }
+}
+
+
+
+
+<appSettings>
+    <add key="KeyVaultUri" value="https://your-key-vault-name.vault.azure.net/" />
+</appSettings>
