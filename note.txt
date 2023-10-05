@@ -1,71 +1,52 @@
-using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
-using System;
-using System.Threading.Tasks;
+@page
+@model ReloadConfigurationModel
+@{
+    ViewData["Title"] = "Reload Configuration";
+}
 
-public class KeyVaultHelper
+<h1>@ViewData["Title"]</h1>
+
+<form method="post">
+    <button type="submit">Reload Configuration</button>
+</form>
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
+
+public class ReloadConfigurationModel : PageModel
 {
-    private readonly string keyVaultUri;
+    private readonly IOptionsMonitor<KeyVaultConfiguration> _keyVaultConfiguration;
 
-    public KeyVaultHelper(string keyVaultUri)
+    public ReloadConfigurationModel(IOptionsMonitor<KeyVaultConfiguration> keyVaultConfiguration)
     {
-        this.keyVaultUri = keyVaultUri;
+        _keyVaultConfiguration = keyVaultConfiguration;
     }
 
-    public async Task<string> GetSecretAsync(string secretName)
+    public void OnPost()
     {
-        try
-        {
-            var client = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
-
-            KeyVaultSecret secret = await client.GetSecretAsync(secretName);
-
-            return secret.Value;
-        }
-        catch (Exception ex)
-        {
-            // Handle exceptions as needed (e.g., log, return default value, or rethrow).
-            // Make sure to handle exceptions gracefully in a production application.
-            throw ex;
-        }
+        _keyVaultConfiguration.Reload();
     }
 }
 
-
-
-
-public class YourController : Controller
+public void ConfigureServices(IServiceCollection services)
 {
-    private readonly KeyVaultHelper keyVaultHelper;
-
-    public YourController()
-    {
-        string keyVaultUri = ConfigurationManager.AppSettings["KeyVaultUri"];
-        keyVaultHelper = new KeyVaultHelper(keyVaultUri);
-    }
-
-    public async Task<ActionResult> YourAction()
-    {
-        try
-        {
-            string connectionString = await keyVaultHelper.GetSecretAsync("YourConnectionStringSecretName");
-
-            // Now you can use the connection string in your application.
-
-            return View();
-        }
-        catch (Exception ex)
-        {
-            // Handle exceptions as needed.
-            // Make sure to handle exceptions gracefully in a production application.
-            return View("Error");
-        }
-    }
+    // ...
+    services.AddRazorPages();
+    // ...
 }
 
 
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    // ...
 
-
-<appSettings>
-    <add key="KeyVaultUri" value="https://your-key-vault-name.vault.azure.net/" />
-</appSettings>
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapRazorPages();
+        endpoints.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=Home}/{action=Index}/{id?}");
+    });
+}
