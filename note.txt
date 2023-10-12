@@ -1,52 +1,16 @@
-@page
-@model ReloadConfigurationModel
-@{
-    ViewData["Title"] = "Reload Configuration";
-}
+using System;
+using Microsoft.Azure.AppConfiguration;
 
-<h1>@ViewData["Title"]</h1>
-
-<form method="post">
-    <button type="submit">Reload Configuration</button>
-</form>
-
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Options;
-
-public class ReloadConfigurationModel : PageModel
+public static class AzureAppConfigurationHelper
 {
-    private readonly IOptionsMonitor<KeyVaultConfiguration> _keyVaultConfiguration;
-
-    public ReloadConfigurationModel(IOptionsMonitor<KeyVaultConfiguration> keyVaultConfiguration)
+    public static string GetAzureAppConfigValue(string key)
     {
-        _keyVaultConfiguration = keyVaultConfiguration;
+        // Replace "YourConnectionStringHere" with your actual connection string
+        string connectionString = System.Configuration.ConfigurationManager.AppSettings["AzureAppConfiguration:ConnectionString"];
+
+        var client = new ConfigurationClient(connectionString);
+        var setting = client.GetConfigurationSetting(new ConfigurationSetting(key, false));
+
+        return setting?.Value;
     }
-
-    public void OnPost()
-    {
-        _keyVaultConfiguration.Reload();
-    }
-}
-
-public void ConfigureServices(IServiceCollection services)
-{
-    // ...
-    services.AddRazorPages();
-    // ...
-}
-
-
-public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-{
-    // ...
-
-    app.UseEndpoints(endpoints =>
-    {
-        endpoints.MapRazorPages();
-        endpoints.MapControllerRoute(
-            name: "default",
-            pattern: "{controller=Home}/{action=Index}/{id?}");
-    });
 }
