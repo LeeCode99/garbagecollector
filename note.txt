@@ -1,16 +1,25 @@
-using System;
-using Microsoft.Azure.AppConfiguration;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.Services.AppAuthentication;
 
-public static class AzureAppConfigurationHelper
+public class MyController : Controller
 {
-    public static string GetAzureAppConfigValue(string key)
+    public ActionResult Index()
     {
-        // Replace "YourConnectionStringHere" with your actual connection string
-        string connectionString = System.Configuration.ConfigurationManager.AppSettings["AzureAppConfiguration:ConnectionString"];
+        string keyVaultName = "YourKeyVaultName";
+        string secretName = "YourSecretName";
 
-        var client = new ConfigurationClient(connectionString);
-        var setting = client.GetConfigurationSetting(new ConfigurationSetting(key, false));
+        var azureServiceTokenProvider = new AzureServiceTokenProvider();
 
-        return setting?.Value;
+        var keyVaultClient = new KeyVaultClient(
+            new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+
+        var secret = keyVaultClient.GetSecretAsync($"https://{keyVaultName}.vault.azure.net/secrets/{secretName}")
+                                  .GetAwaiter().GetResult();
+
+        string connectionString = secret.Value;
+
+        // Use connectionString to connect to your database
+
+        return View();
     }
 }
