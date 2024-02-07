@@ -1,25 +1,31 @@
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.Services.AppAuthentication;
+import csv
 
-public class MyController : Controller
-{
-    public ActionResult Index()
-    {
-        string keyVaultName = "YourKeyVaultName";
-        string secretName = "YourSecretName";
+def fix_csv_format(input_file, output_file):
+    with open(input_file, 'r') as infile, open(output_file, 'w', newline='') as outfile:
+        reader = csv.reader(infile, delimiter='|')
+        writer = csv.writer(outfile, delimiter='|')
 
-        var azureServiceTokenProvider = new AzureServiceTokenProvider();
+        for row in reader:
+            # Remove leading and trailing whitespaces from each value
+            row = [value.strip() for value in row]
 
-        var keyVaultClient = new KeyVaultClient(
-            new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+            # Ensure there is one more value than the number of pipes
+            if len(row) > 0 and row.count('') > 0:
+                # If there are empty values, remove them
+                row = list(filter(None, row))
+            
+            if len(row) == 0:
+                continue  # Skip empty rows
+            
+            while len(row) < row.count('|') + 1:
+                # If there are missing values, add empty values to make them equal
+                row.append('')
 
-        var secret = keyVaultClient.GetSecretAsync($"https://{keyVaultName}.vault.azure.net/secrets/{secretName}")
-                                  .GetAwaiter().GetResult();
+            writer.writerow(row)
 
-        string connectionString = secret.Value;
+if __name__ == "__main__":
+    input_file_path = 'input.csv'  # Change this to your input file path
+    output_file_path = 'output.csv'  # Change this to your desired output file path
 
-        // Use connectionString to connect to your database
-
-        return View();
-    }
-}
+    fix_csv_format(input_file_path, output_file_path)
+    print(f"CSV formatting fixed. Output saved to {output_file_path}")
