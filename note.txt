@@ -26,6 +26,9 @@ def fix_csv_format(input_file, output_file):
                     # If there are no more rows, add empty values to make the row consistent
                     row.append('')
 
+            # If there are more values than needed, truncate the row
+            row = row[:num_pipes + 1]
+
             # Write the formatted row to the output file
             writer.writerow(row)
 
@@ -35,3 +38,4 @@ if __name__ == "__main__":
 
     fix_csv_format(input_file_path, output_file_path)
     print(f"CSV formatting fixed. Output saved to {output_file_path}")
+``
