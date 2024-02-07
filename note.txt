@@ -5,22 +5,22 @@ def fix_csv_format(input_file, output_file):
         reader = csv.reader(infile, delimiter='|')
         writer = csv.writer(outfile, delimiter='|')
 
+        # Get the number of pipes from the first line
+        first_line = next(reader)
+        num_pipes = len(first_line) - 1  # Subtract 1 to get the number of pipes
+
+        # Write the first line to the output file
+        writer.writerow(first_line)
+
         for row in reader:
             # Remove leading and trailing whitespaces from each value
             row = [value.strip() for value in row]
 
             # Ensure there is one more value than the number of pipes
-            if len(row) > 0 and row.count('') > 0:
-                # If there are empty values, remove them
-                row = list(filter(None, row))
-            
-            if len(row) == 0:
-                continue  # Skip empty rows
-            
-            while len(row) < row.count('|') + 1:
-                # If there are missing values, add empty values to make them equal
-                row.append('')
+            while len(row) < num_pipes:
+                row.append('')  # Add empty values to make the row consistent
 
+            # Write the formatted row to the output file
             writer.writerow(row)
 
 if __name__ == "__main__":
