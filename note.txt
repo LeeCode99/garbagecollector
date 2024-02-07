@@ -18,7 +18,13 @@ def fix_csv_format(input_file, output_file):
 
             # Ensure there is one more value than the number of pipes
             while len(row) < num_pipes:
-                row.append('')  # Add empty values to make the row consistent
+                try:
+                    # Try to get values from the next row to fill the empty spaces
+                    next_row = next(reader)
+                    row.extend(next_row)
+                except StopIteration:
+                    # If there are no more rows, add empty values to make the row consistent
+                    row.append('')
 
             # Write the formatted row to the output file
             writer.writerow(row)
