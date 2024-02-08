@@ -1,41 +1,28 @@
-import csv
+# Define the input and output file paths
+$inputCsvFile = 'input_file.csv'
+$outputCsvFile = 'output_file.csv'
+$specialChar = '&&?&&'
 
-def fix_csv_format(input_file, output_file):
-    with open(input_file, 'r') as infile, open(output_file, 'w', newline='') as outfile:
-        reader = csv.reader(infile, delimiter='|')
-        writer = csv.writer(outfile, delimiter='|')
+# Function to replace newline characters and write to the output file
+function Convert-AndWriteCsv {
+    param (
+        [string]$inputFile,
+        [string]$outputFile,
+        [string]$specialCharacter
+    )
 
-        # Get the number of pipes from the first line
-        first_line = next(reader)
-        num_pipes = len(first_line) - 1  # Subtract 1 to get the number of pipes
+    Get-Content $inputFile | ForEach-Object {
+        # Replace newline characters with the special character using -replace
+        $_ -replace '\r\n|\r|\n', $specialCharacter
+    } | Set-Content $outputFile
+}
 
-        # Write the first line to the output file
-        writer.writerow(first_line)
-
-        for row in reader:
-            # Remove leading and trailing whitespaces from each value
-            row = [value.strip() for value in row]
-
-            # Ensure there is one more value than the number of pipes
-            while len(row) < num_pipes:
-                try:
-                    # Try to get values from the next row to fill the empty spaces
-                    next_row = next(reader)
-                    row.extend(next_row)
-                except StopIteration:
-                    # If there are no more rows, add empty values to make the row consistent
-                    row.append('')
-
-            # If there are more values than needed, truncate the row
-            row = row[:num_pipes + 1]
-
-            # Write the formatted row to the output file
-            writer.writerow(row)
-
-if __name__ == "__main__":
-    input_file_path = 'input.csv'  # Change this to your input file path
-    output_file_path = 'output.csv'  # Change this to your desired output file path
-
-    fix_csv_format(input_file_path, output_file_path)
-    print(f"CSV formatting fixed. Output saved to {output_file_path}")
-``
+# Perform the conversion three times
+for ($i = 1; $i -le 3; $i++) {
+    # Call the function to replace newline characters
+    Convert-AndWriteCsv -inputFile $inputCsvFile -outputFile $outputCsvFile -specialCharacter $specialChar
+    
+    # Update input file to use the previously generated output file for the next iteration
+    $inputCsvFile = $outputCsvFile
+    $outputCsvFile = "output_file_$($i + 1).csv"  # Generate a new output file for the next iteration
+}
