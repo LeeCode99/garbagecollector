@@ -1,28 +1,32 @@
-# Define the input and output file paths
-$inputCsvFile = 'input_file.csv'
-$outputCsvFile = 'output_file.csv'
-$specialChar = '&&?&&'
+using System;
+using System.IO;
+using System.Text.RegularExpressions;
 
-# Function to replace newline characters and write to the output file
-function Convert-AndWriteCsv {
-    param (
-        [string]$inputFile,
-        [string]$outputFile,
-        [string]$specialCharacter
-    )
+class Program
+{
+    static void Main()
+    {
+        // Define the input and output file paths
+        string inputCsvFile = "input_file.csv";
+        string outputCsvFile = "output_file.csv";
+        string specialChar = "&&?&&";
 
-    Get-Content $inputFile | ForEach-Object {
-        # Replace newline characters with the special character using -replace
-        $_ -replace '\r\n|\r|\n', $specialCharacter
-    } | Set-Content $outputFile
-}
+        // Call the function to replace newline characters
+        ConvertAndWriteCsv(inputCsvFile, outputCsvFile, specialChar);
+    }
 
-# Perform the conversion three times
-for ($i = 1; $i -le 3; $i++) {
-    # Call the function to replace newline characters
-    Convert-AndWriteCsv -inputFile $inputCsvFile -outputFile $outputCsvFile -specialCharacter $specialChar
-    
-    # Update input file to use the previously generated output file for the next iteration
-    $inputCsvFile = $outputCsvFile
-    $outputCsvFile = "output_file_$($i + 1).csv"  # Generate a new output file for the next iteration
+    static void ConvertAndWriteCsv(string inputFile, string outputFile, string specialCharacter)
+    {
+        // Read all lines from the input file
+        string[] lines = File.ReadAllLines(inputFile);
+
+        // Replace newline characters with the special character using Regex.Replace
+        for (int i = 0; i < lines.Length; i++)
+        {
+            lines[i] = Regex.Replace(lines[i], @"\r\n|\r|\n", specialCharacter);
+        }
+
+        // Write the modified lines to the output file
+        File.WriteAllLines(outputFile, lines);
+    }
 }
